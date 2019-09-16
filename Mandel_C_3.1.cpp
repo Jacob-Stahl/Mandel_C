@@ -16,10 +16,10 @@
 using namespace std;
 
 const int N = 128; // num threads
-int max_iter = 100; // iteration cap, modified by current zoom level
+int max_iter = 250; // iteration cap, modified by current zoom level
 const int ref_zoom = 2; // distance on the complex plane at zoom x1
-int dim_x = 700; // x and y dims of screen
-int dim_y = 700;
+int dim_x = 1100; // x and y dims of screen
+int dim_y = 1100;
 
 std::complex<double> c(-0.7269, 0.1689); // julia set constant / seed
 
@@ -28,9 +28,9 @@ std::tuple <unsigned char, unsigned char, unsigned char> color_scheme(int iter) 
 	int red, blue, green;
 	if (iter < max_iter)
 	{
-		red = cos(log2(iter)) * 255;
-		green = sin(log2(iter)) * 255;
-		blue = -cos(log2(iter)) * 255;
+		red   = (sin(cbrt(iter / 4)    ) + 1) * (127.5);
+		green = (sin(cbrt(iter * 3.14159) - 2) + 1) * (127.5);
+		blue  = (sin(cbrt(iter / 2.17182) + 2) + 1) * (127.5);
 	}
 	else
 	{
@@ -38,67 +38,107 @@ std::tuple <unsigned char, unsigned char, unsigned char> color_scheme(int iter) 
 		green = 0;
 		blue = 0;
 	}
-	return { red, green ,blue };
-} // 
+	return { red, green, blue };
+}
+// Save screenshot
+// file: Filename for created screenshot
+// renderer: pointer to SDL_Renderer
+bool saveScreenshot(const std::string &file, SDL_Renderer *renderer) {
+	// Used temporary variables
+	SDL_Rect _viewport;
+	SDL_Surface *_surface = NULL;
+
+	// Get viewport size
+	SDL_RenderGetViewport(renderer, &_viewport);
+
+	// Create SDL_Surface with depth of 32 bits
+	_surface = SDL_CreateRGBSurface(0, _viewport.w, _viewport.h, 32, 0, 0, 0, 0);
+
+	// Check if the surface is created properly
+	if (_surface == NULL) {
+		std::cout << "Cannot create SDL_Surface: " << SDL_GetError() << std::endl;
+		return false;
+	}
+
+	// Get data from SDL_Renderer and save them into surface
+	if (SDL_RenderReadPixels(renderer, NULL, _surface->format->format, _surface->pixels, _surface->pitch) != 0) {
+		std::cout << "Cannot read data from SDL_Renderer: " << SDL_GetError() << std::endl;
+
+		// Don't forget to free memory
+		SDL_FreeSurface(_surface);
+		return false;
+	}
+
+	// Save screenshot as PNG file
+	if (SDL_SaveBMP(_surface, file.c_str()) != 0) {
+		std::cout << "Cannot save PNG file: " << SDL_GetError() << std::endl;
+
+		// Free memory
+		SDL_FreeSurface(_surface);
+		return false;
+	}
+	// Free memory
+	SDL_FreeSurface(_surface);
+	return true;
+}
 
 /* fractal functions:
 	brot_iter : z = z^2 + z0
-	julia_iter: z = z^2 + constant
 
 	funky variants terminate when z gets too close to zero */
 
-std::complex<double> c_pow(std::complex<double> z)
+int funky_brot_iter(double r0, double i0)
 {
-	double r = real(z), i = imag(z);
-	std::complex<double> out(pow(r, 2) - pow(i, 2), 2 * r*i);
-
-	return out;
-}
-int funky_julia_iter(double r, double i)
-{
-	std::complex<double>  z(r, i);
+	double r = r0;
+	double i = i0;
+	double r2 = r * r;
+	double i2 = i * i;
+	double z_mag_2 = r2 + i2;
 	int iter = 0;
-	double z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
-	float coef = (abs(real(z)) + abs(imag(z))) / max_iter;
+	float coef = (r + i) / max_iter;
 
-	while ((iter < max_iter) && (z_mag_2 < 4) && (z_mag_2 > pow(iter * coef, 2))) // iter * coef = inner event horizon radius
+	while ((iter < max_iter) && (z_mag_2 < 4) && (z_mag_2 > pow(iter * coef, 2)))
 	{
-		z = z * z + c;
+		i = r * i;
+		r = r2 - i2;
+		i += i;
+
+		r += r0;
+		i += i0;
+
+		r2 = r * r;
+		i2 = i * i;
+
+		z_mag_2 = r2 + i2;
+		coef = (r + i) / max_iter;
 		iter += 1;
-		z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
 	}
 	return iter;
 }
-int funky_brot_iter(double r, double i)
+int brot_iter(double r0, double i0)
 {
-	std::complex<double> z0(r, i);
-	std::complex<double>  z(r, i);
+	double r = r0;
+	double i = i0;
+	double r2 = r * r;
+	double i2 = i * i;
+	double z_mag_2 = r2 + i2;
 	int iter = 0;
-	double z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
-	float coef = (abs(real(z)) + abs(imag(z))) / max_iter;
 
-	while ((iter < max_iter) && (z_mag_2 < 4) && (z_mag_2 > pow(iter * coef, 2))) // iter * coef = inner event horizon radius
+	while ((iter < max_iter) && (z_mag_2) < 4)
 	{
-		z = z * z + z0;
-		iter += 1;
-		z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
-	}
-	return iter;
-}
-int brot_iter(double r, double i)
-{
-	std::complex<double> z0(r, i);
-	std::complex<double>  z(r, i);
-	int iter = 0;
-	double z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
+		i = r * i;
+		r = r2 - i2;  
+		i += i;
 
-	while ((iter < max_iter) && (z_mag_2) < 4) // iter / coef = inner event horizon radius
-	{
-		z = c_pow(z) + z0;
+		r += r0;
+		i += i0;
+
+		r2 = r * r;
+		i2 = i * i;
+
+		z_mag_2 = r2 + i2;
 		iter += 1;
-		z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
 	};
-
 	return iter;
 }
 int julia_iter(double r, double i)
@@ -139,7 +179,7 @@ void threadLauncher(double *arrR, double *arrI, int *iter, int size, function<in
 	};
 	cout << "done " << endl;
 };
-void render(double pos_x, double pos_y, float zoom, int dim_x, int dim_y, SDL_Renderer *renderer)
+void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y, SDL_Renderer *renderer)
 {
 	const int size = dim_x * dim_y;
 
@@ -162,7 +202,7 @@ void render(double pos_x, double pos_y, float zoom, int dim_x, int dim_y, SDL_Re
 
 	cout.precision(3);
 
-	max_iter = 100 * (log10(zoom) + 1);
+	max_iter = 250 * (log2(zoom) + 1);
 
 	zr = xmin;
 	zi = ymin;
@@ -197,11 +237,11 @@ void render(double pos_x, double pos_y, float zoom, int dim_x, int dim_y, SDL_Re
 	{
 		for (int j = 0; j < dim_x; j++)
 		{
-			shade = color_scheme(iter[idx]);
+			//shade = color_scheme(iter[idx]);
 			SDL_SetRenderDrawColor(renderer,
-				std::get<0>(shade),
-				std::get<1>(shade),
-				std::get<2>(shade),
+				(sin(cbrt(iter[idx] / 4)) + 1) * (127.5) ,
+				(sin(cbrt(iter[idx] * 3.14159) - 2) + 1) * (127.5),
+				(sin(cbrt(iter[idx] / 2.17182) + 2) + 1) * (127.5),
 				1);
 			//cout << iter[idx] << " ";
 			SDL_RenderDrawPoint(renderer, j, i);
@@ -219,7 +259,7 @@ int main()
 	double ave_dim = (dim_x + dim_y) / 2;
 	double pos_x = 0; // center of screen in complex plane
 	double pos_y = 0;
-	float zoom = 1;
+	double zoom = 1;
 	bool running = true;
 	cout.precision(64);
 
@@ -229,14 +269,27 @@ int main()
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
 		dim_x, dim_y, 0);
+	SDL_Window *sshot = SDL_CreateWindow("Mandel_C_3.0",
+		SDL_WINDOWPOS_CENTERED,
+		SDL_WINDOWPOS_CENTERED,
+		dim_x * 3, dim_y * 3, 0);
 
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	SDL_Renderer *sshot_renderer = SDL_CreateRenderer(sshot, -1, SDL_RENDERER_ACCELERATED);
 	SDL_Event event;
+
+	std::string file;
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderClear(renderer);
 	SDL_RenderPresent(renderer);
 
+	SDL_SetRenderDrawColor(sshot_renderer, 0, 0, 0, 0);
+	SDL_RenderClear(sshot_renderer);
+	SDL_RenderPresent(sshot_renderer);
+
+	SDL_HideWindow(sshot);
+	
 	render(pos_x, pos_y, zoom, dim_x, dim_y, renderer);
 
 	while (running)
@@ -254,7 +307,6 @@ int main()
 				{
 					SDL_GetMouseState(&x_mpos, &y_mpos);
 				}
-			}
 			if (event.type == SDL_MOUSEBUTTONUP)
 			{
 				if (event.button.button == SDL_BUTTON_LEFT) // finds change in y_mpos for zoom value
