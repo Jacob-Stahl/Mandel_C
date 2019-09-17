@@ -21,16 +21,16 @@ const int ref_zoom = 2; // distance on the complex plane at zoom x1
 int dim_x = 1100; // x and y dims of screen
 int dim_y = 1100;
 
-std::complex<double> c(-0.7269, 0.1689); // julia set constant / seed
+std::complex<double> c(-0.7269, 0.1689); // julia set constant seed
 
 std::tuple <unsigned char, unsigned char, unsigned char> color_scheme(int iter) // generates RGB tuple from iteration value
 {
 	int red, blue, green;
 	if (iter < max_iter)
 	{
-		red   = (sin(cbrt(iter / 4)    ) + 1) * (127.5);
-		green = (sin(cbrt(iter * 3.14159) - 2) + 1) * (127.5);
-		blue  = (sin(cbrt(iter / 2.17182) + 2) + 1) * (127.5);
+		red   = (sin(cbrt(iter)   /4 ) + 1) * (127.5);
+		green = (sin(cbrt(iter) - 2) + 1) * (127.5);
+		blue  = (sin(cbrt(iter) * 2 + 2) + 1) * (127.5);
 	}
 	else
 	{
@@ -39,49 +39,7 @@ std::tuple <unsigned char, unsigned char, unsigned char> color_scheme(int iter) 
 		blue = 0;
 	}
 	return { red, green, blue };
-}
-// Save screenshot
-// file: Filename for created screenshot
-// renderer: pointer to SDL_Renderer
-bool saveScreenshot(const std::string &file, SDL_Renderer *renderer) {
-	// Used temporary variables
-	SDL_Rect _viewport;
-	SDL_Surface *_surface = NULL;
-
-	// Get viewport size
-	SDL_RenderGetViewport(renderer, &_viewport);
-
-	// Create SDL_Surface with depth of 32 bits
-	_surface = SDL_CreateRGBSurface(0, _viewport.w, _viewport.h, 32, 0, 0, 0, 0);
-
-	// Check if the surface is created properly
-	if (_surface == NULL) {
-		std::cout << "Cannot create SDL_Surface: " << SDL_GetError() << std::endl;
-		return false;
-	}
-
-	// Get data from SDL_Renderer and save them into surface
-	if (SDL_RenderReadPixels(renderer, NULL, _surface->format->format, _surface->pixels, _surface->pitch) != 0) {
-		std::cout << "Cannot read data from SDL_Renderer: " << SDL_GetError() << std::endl;
-
-		// Don't forget to free memory
-		SDL_FreeSurface(_surface);
-		return false;
-	}
-
-	// Save screenshot as PNG file
-	if (SDL_SaveBMP(_surface, file.c_str()) != 0) {
-		std::cout << "Cannot save PNG file: " << SDL_GetError() << std::endl;
-
-		// Free memory
-		SDL_FreeSurface(_surface);
-		return false;
-	}
-	// Free memory
-	SDL_FreeSurface(_surface);
-	return true;
-}
-
+};
 /* fractal functions:
 	brot_iter : z = z^2 + z0
 
@@ -153,8 +111,7 @@ int julia_iter(double r, double i)
 		z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
 	}
 	return iter;
-}
-
+};
 void threadBlock(double *realBlock, double *imagBlock, int *iterBlock, int size, function<int(double, double)> func) // thread level; applies fractal function to each element in block
 {
 	for (int i = 0; i < size; i++)
@@ -237,13 +194,14 @@ void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y, SDL_R
 	{
 		for (int j = 0; j < dim_x; j++)
 		{
-			//shade = color_scheme(iter[idx]);
+			shade = color_scheme(iter[idx]);
 			SDL_SetRenderDrawColor(renderer,
-				(sin(cbrt(iter[idx] / 4)) + 1) * (127.5) ,
-				(sin(cbrt(iter[idx] * 3.14159) - 2) + 1) * (127.5),
-				(sin(cbrt(iter[idx] / 2.17182) + 2) + 1) * (127.5),
+				std::get<0>(shade),
+				std::get<1>(shade),
+				std::get<2>(shade),
 				1);
 			//cout << iter[idx] << " ";
+
 			SDL_RenderDrawPoint(renderer, j, i);
 			idx++;
 		};
@@ -260,72 +218,57 @@ int main()
 	double pos_x = 0; // center of screen in complex plane
 	double pos_y = 0;
 	double zoom = 1;
-	bool running = true;
+	int running = 1;
 	cout.precision(64);
 
 	SDL_Init(SDL_INIT_EVERYTHING);
 
-	SDL_Window *window = SDL_CreateWindow("Mandel_C_3.0",
+	SDL_Window *window = SDL_CreateWindow("Mandel_C_3.1",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
 		dim_x, dim_y, 0);
-	SDL_Window *sshot = SDL_CreateWindow("Mandel_C_3.0",
-		SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED,
-		dim_x * 3, dim_y * 3, 0);
 
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	SDL_Renderer *sshot_renderer = SDL_CreateRenderer(sshot, -1, SDL_RENDERER_ACCELERATED);
 	SDL_Event event;
-
-	std::string file;
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderClear(renderer);
 	SDL_RenderPresent(renderer);
 
-	SDL_SetRenderDrawColor(sshot_renderer, 0, 0, 0, 0);
-	SDL_RenderClear(sshot_renderer);
-	SDL_RenderPresent(sshot_renderer);
-
-	SDL_HideWindow(sshot);
-	
 	render(pos_x, pos_y, zoom, dim_x, dim_y, renderer);
 
-	while (running)
+	while (running == 1)
 	{
 		while (SDL_PollEvent(&event))
 		{
-			if (event.type == SDL_QUIT)
-			{
-				running = false;
-				break;
-			}
 			if (event.type == SDL_MOUSEBUTTONDOWN)
 			{
 				if (event.button.button == SDL_BUTTON_LEFT) // finds location to zoom in on
 				{
 					SDL_GetMouseState(&x_mpos, &y_mpos);
 				}
+			}
 			if (event.type == SDL_MOUSEBUTTONUP)
 			{
 				if (event.button.button == SDL_BUTTON_LEFT) // finds change in y_mpos for zoom value
 				{
 					SDL_GetMouseState(&x1_mpos, &y1_mpos);
 
-					pos_x = pos_x + (
+					pos_x = pos_x +
 						(
-						(
-							x_mpos - (dim_x) / 2
-							) / (ave_dim / 2)
+							(
+								(
+									x_mpos - (dim_x) / 2
+								) / (ave_dim / 2)
 							) / (zoom / ref_zoom)
 						);
 
-					pos_y = pos_y - (
+					pos_y = pos_y -
 						(
-						(
-							y_mpos - (dim_y) / 2
-							) / (ave_dim / 2)
+							(
+								(
+									y_mpos - (dim_y) / 2
+								) / (ave_dim / 2)
 							) / (zoom / ref_zoom)
 						);
 
@@ -334,10 +277,10 @@ int main()
 					render(pos_x, pos_y, zoom, dim_x, dim_y, renderer);
 				}
 			}
-		}
-	}
+		};
+	};
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;
-}
+};
