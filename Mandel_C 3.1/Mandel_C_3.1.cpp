@@ -112,6 +112,25 @@ int julia_iter(double r, double i)
 	}
 	return iter;
 };
+int collatz(double r, double i)
+{
+	std::complex<double> z(r, i);
+	std::complex<double> a;
+	std::complex<double> b;
+	std::complex<double> c1(1,0);
+	std::complex<double> c2(2,0);
+	std::complex<double> c3(3,0);
+	register int iter = 0;
+	register double z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
+	while ((iter < max_iter) && (z_mag_2 < 64))
+	{
+		a = M_PI / 2 * z;
+		z = (z*pow(cos(a), 2)) / c2 + ((c3 * z + c1) / c2) * pow(sin(a), 2);
+		iter += 1;
+		z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
+	}
+	return iter;
+};
 void threadBlock(double *realBlock, double *imagBlock, int *iterBlock, int size, function<int(double, double)> func) // thread level; applies fractal function to each element in block
 {
 	for (int i = 0; i < size; i++)
