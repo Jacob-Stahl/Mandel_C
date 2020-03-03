@@ -1,10 +1,11 @@
 #include <iostream>
 #include <random>
 #include <thread>
+#include <functional>
 #include <math.h>
+#include "global.h"
 #ifndef MATRIX_H
 #define MATRIX_H
-#define NUM_THREADS 16
 
 class Matrix
 {
