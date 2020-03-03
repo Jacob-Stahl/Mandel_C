@@ -1,9 +1,0 @@
-﻿  Mandel_C_3.1.cpp
-c:\users\jacob\source\repos\mandel_c_3.1\mandel_c_3.1\mandel_c_3.1.cpp(31): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-c:\users\jacob\source\repos\mandel_c_3.1\mandel_c_3.1\mandel_c_3.1.cpp(32): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-c:\users\jacob\source\repos\mandel_c_3.1\mandel_c_3.1\mandel_c_3.1.cpp(33): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-c:\users\jacob\source\repos\mandel_c_3.1\mandel_c_3.1\mandel_c_3.1.cpp(62): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\jacob\source\repos\mandel_c_3.1\mandel_c_3.1\mandel_c_3.1.cpp(78): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\jacob\source\repos\mandel_c_3.1\mandel_c_3.1\mandel_c_3.1.cpp(165): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-c:\users\jacob\source\repos\mandel_c_3.1\mandel_c_3.1\mandel_c_3.1.cpp(280): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-  Mandel_C_3.1.vcxproj -> C:\Users\jacob\source\repos\Mandel_C_3.1\x64\Debug\Mandel_C_3.1.exe
