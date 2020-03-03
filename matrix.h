@@ -7,16 +7,17 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
+template <class T>
 class Matrix
 {
 public:
 	unsigned int width, height;
-	float *arr;
+	T *arr;
 
 	Matrix(int w = 1, int h = 1) {
 		width = w;
 		height = h;
-		arr = new float[width * height + 1];
+		arr = new T[width * height + 1];
 	};
 	void pprint() {
 		int x;
@@ -53,9 +54,9 @@ public:
 			arr[i] = i;
 		}
 	};
-	void random(float low = 0, float high = 1) {
+	void random(T low = 0, T high = 1) {
 		int range = width * height;
-		std::uniform_real_distribution<float> dist(low, high);
+		std::uniform_real_distribution<T> dist(low, high);
 		std::default_random_engine generator;
 
 		for ( int i = 0; i < range; i++) {
@@ -63,9 +64,9 @@ public:
 		}
 	}
 	void t() {
-		float *arr2, *temparr;
-		arr2 = new float[width * height + 1];
-		temparr = new float[width * height + 1];
+		T *arr2, *temparr;
+		arr2 = new T[width * height + 1];
+		temparr = new T[width * height + 1];
 		int x, temp;
 
 		for (int i = 0; i < width; i++) {
@@ -86,19 +87,21 @@ public:
 		height = temp;
 	};
 
-	friend Matrix operator + (Matrix const &A, Matrix const &B);
-	friend Matrix operator - (Matrix const &A, Matrix const &B);
-	friend Matrix operator * (Matrix const &A, Matrix const &B);
-	friend Matrix operator / (Matrix const &A, Matrix const &B);
+	friend Matrix<T> operator + (Matrix<T> const &A, Matrix<T> const &B);
+	friend Matrix<T> operator - (Matrix<T> const &A, Matrix<T> const &B);
+	friend Matrix<T> operator * (Matrix<T> const &A, Matrix<T> const &B);
+	friend Matrix<T> operator / (Matrix<T> const &A, Matrix<T> const &B);
 };
 
 // takes one array; output arr = func( input arr)
-void threadBlock(float *blockA, float *blockB, int size, std::function<float(float)> func) { // thread level; applies function to each element in block
+template<typename T>
+void threadBlock(T *blockA, T *blockB, int size, std::function<T(T)> func) { // thread level; applies function to each element in block
 	for (int i = 0; i < size; i++) {
 		blockB[i] = func(blockA[i]);
 	};
 };
-void threadLauncher(float *arrA, float *arrOut, int size, std::function<float(float)> func) { // splits work into threads
+template<typename T>
+void threadLauncher(T *arrA, T *arrOut, int size, std::function<T(T)> func) { // splits work into threads
 	std::thread threads[NUM_THREADS];
 	int blockSize = size / NUM_THREADS;
 	int extra = size % NUM_THREADS;
@@ -119,13 +122,15 @@ void threadLauncher(float *arrA, float *arrOut, int size, std::function<float(fl
 	};
 };
 
-// takes one array and a float; output arr = func( input arr, float) 
-void NumthreadBlock(float *blockA, float *blockB, int size, float num, std::function<float(float, float)> func) { // thread level; applies function to each element in block
+// takes one array and a T; output arr = func( input arr, T)
+template<typename T>
+void NumthreadBlock(T *blockA, T *blockB, int size, T num, std::function<T(T, T)> func) { // thread level; applies function to each element in block
 	for (int i = 0; i < size; i++) {
 		blockB[i] = func(blockA[i], num);
 	};
 };
-void NumthreadLauncher(float *arrA, float *arrOut,int size, float num, std::function<float(float, float)> func) {// splits work into threads
+template<typename T>
+void NumthreadLauncher(T *arrA, T *arrOut,int size, T num, std::function<T(T, T)> func) {// splits work into threads
 	std::thread threads[NUM_THREADS];
 	int blockSize = size / NUM_THREADS;
 	int extra = size % NUM_THREADS;
@@ -149,13 +154,15 @@ void NumthreadLauncher(float *arrA, float *arrOut,int size, float num, std::func
 	};
 };
 
-//takes 2 arrays; output arr = func(input arr A, input arr B) 
-void OpthreadBlock(float *blockA, float *blockB, float *blockC, int size, std::function<float(float, float)> func) { // thread level; applies function to each element in block
+//takes 2 arrays; output arr = func(input arr A, input arr B)
+template<typename T>
+void OpthreadBlock(T *blockA, T *blockB, T *blockC, int size, std::function<T(T, T)> func) { // thread level; applies function to each element in block
 	for (int i = 0; i < size; i++) {
 		blockC[i] = func(blockA[i], blockB[i]);
 	};
 };
-void OpthreadLauncher(float *arrA, float *arrB, float *arrOut, int size, std::function<float(float, float)> func) { // splits work into threads
+template<typename T>
+void OpthreadLauncher(T *arrA, T *arrB, T *arrOut, int size, std::function<T(T, T)> func) { // splits work into threads
 	std::thread threads[NUM_THREADS];
 	int blockSize = size / NUM_THREADS;
 	int extra = size % NUM_THREADS;
@@ -175,8 +182,8 @@ void OpthreadLauncher(float *arrA, float *arrB, float *arrOut, int size, std::fu
 		threads[i].join();
 	};
 };
-
-void  matmulThread(Matrix *a, Matrix *b, Matrix *c, int threadnum) { // thread level
+template<typename T>
+void  matmulThread(Matrix<T>  *a, Matrix<T> *b, Matrix<T> *c, int threadnum) { // thread level
 	int N;
 	int x, y;
 
@@ -193,46 +200,57 @@ void  matmulThread(Matrix *a, Matrix *b, Matrix *c, int threadnum) { // thread l
 	};
 };
 
-float Mult(float a, float b) { return a * b; };
-float Divide(float a, float b) { return a / b; };
-float Sub(float a, float b) { return a - b; };
-float Add(float a, float b) { return a + b; };
-float Tanh(float x) { return tanh(x); };
-float Sig(float x) { return 1 / (1 + exp(x)); };
-float SigPr(float x) { return Sig(x) * (1 - Sig(x));  };
-float Relu(float x) {
+template<typename T>
+T Mult(T a, T b) { return a * b; };
+template<typename T>
+T Divide(T a, T b) { return a / b; };
+template<typename T>
+T Sub(T a, T b) { return a - b; };
+template<typename T>
+T Add(T a, T b) { return a + b; };
+template<typename T>
+T Tanh(T x) { return tanh(x); };
+template<typename T>
+T Sig(T x) { return 1 / (1 + exp(x)); };
+template<typename T>
+T SigPr(T x) { return Sig(x) * (1 - Sig(x));  };
+template<typename T>
+T Relu(T x) {
 	if (x > 0) {
 		return x;
 	} else {
 		return 0;
 	}
 }
-float ReluPr(float x) {
+template<typename T>
+T ReluPr(T x) {
 	if (x > 0) {
 		return 1;
 	} else {
 		return 0;
 	}
 }
-
-Matrix applyFunc(Matrix a, std::function<float(float)> func) { // applies function element wise
+template<typename T>
+Matrix<T> applyFunc(Matrix<T> a, std::function<T(T)> func) { // applies function element wise
 	int size;
-	Matrix b(a.width, a.height);
+	Matrix<T> b(a.width, a.height);
 	size = b.width * b.height;
 	threadLauncher(a.arr, b.arr, size, func);
 	return b;
 };
-Matrix applyConst(Matrix a, float num, std::function<float(float, float)> func) {// applies function element wise; float(float {array}, float {num})
+template<typename T>
+Matrix<T> applyConst(Matrix<T> a, T num, std::function<T(T, T)> func) {// applies function element wise; T(T {array}, T {num})
 	int size;
-	Matrix b(a.width, a.height);
+	Matrix<T> b(a.width, a.height);
 	size = b.width * b.height;
 	NumthreadLauncher(a.arr, b.arr, size, num, func);
 	return b;
 };
-Matrix applyOp(Matrix a, Matrix b, std::function<float(float, float)> func) {
+template<typename T>
+Matrix<T> applyOp(Matrix<T> a, Matrix<T> b, std::function<T(T, T)> func) {
 	int size;
 	if ((a.width == b.width) && (a.height == b.height)) {
-		Matrix c(a.width, a.height);
+		Matrix<T> c(a.width, a.height);
 		size = c.width * c.height;
 		OpthreadLauncher(a.arr, b.arr, c.arr, size, func);
 		return c;
@@ -241,18 +259,27 @@ Matrix applyOp(Matrix a, Matrix b, std::function<float(float, float)> func) {
 	};
 }; // applies operator element wise
 
-Matrix elemSub(Matrix a, Matrix b) { return applyOp(a, b, Sub); };
-Matrix elemMult(Matrix a, Matrix b) { return applyOp(a, b, Mult); };
-Matrix elemDivide(Matrix a, Matrix b) { return applyOp(a, b, Divide); };
-Matrix elemAdd(Matrix a, Matrix b) { return applyOp(a, b, Add); };
+template<typename T>
+Matrix<T> elemSub(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Sub); };
+template<typename T>
+Matrix<T> elemMult(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Mult); };
+template<typename T>
+Matrix<T> elemDivide(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Divide); };
+template<typename T>
+Matrix<T> elemAdd(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Add); };
 
-Matrix constSub(Matrix a, float x) { return applyConst(a, x, Sub); };
-Matrix constMult(Matrix a, float x) { return applyConst(a, x, Mult); };
-Matrix constDivide(Matrix a, float x) { return applyConst(a, x, Divide); };
-Matrix constAdd(Matrix a, float x) { return applyConst(a, x, Add); };
+template<typename T>
+Matrix<T> constSub(Matrix<T> a, T x) { return applyConst(a, x, Sub); };
+template<typename T>
+Matrix<T> constMult(Matrix<T> a, T x) { return applyConst(a, x, Mult); };
+template<typename T>
+Matrix<T> constDivide(Matrix<T> a, T x) { return applyConst(a, x, Divide); };
+template<typename T>
+Matrix<T> constAdd(Matrix<T> a, T x) { return applyConst(a, x, Add); };
 
-Matrix matmul(Matrix a, Matrix b) {
-	Matrix c(b.width, a.height);
+template<typename T>
+Matrix<T> matmul(Matrix<T> a, Matrix<T> b) {
+	Matrix<T> c(b.width, a.height);
 	std::thread* threads;
 	if (a.width == b.height) {
 		threads = new std::thread[NUM_THREADS];
@@ -267,9 +294,13 @@ Matrix matmul(Matrix a, Matrix b) {
 		std::cout << "width a must equal height b";
 	}
 };
-Matrix operator + (Matrix const &A, Matrix const &B) { return elemAdd(A, B); }
-Matrix operator - (Matrix const &A, Matrix const &B) { return elemSub(A, B); }
-Matrix operator * (Matrix const &A, Matrix const &B) { return elemMult(A, B); }
-Matrix operator / (Matrix const &A, Matrix const &B) { return elemDivide(A, B);}
+template<typename T>
+Matrix<T> operator + (Matrix<T> const &A, Matrix<T> const &B) { return elemAdd(A, B); }
+template<typename T>
+Matrix<T> operator - (Matrix<T> const &A, Matrix<T> const &B) { return elemSub(A, B); }
+template<typename T>
+Matrix<T> operator * (Matrix<T> const &A, Matrix<T> const &B) { return elemMult(A, B); }
+template<typename T>
+Matrix<T> operator / (Matrix<T> const &A, Matrix<T> const &B) { return elemDivide(A, B);}
 
 #endif
