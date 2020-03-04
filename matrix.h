@@ -2,14 +2,106 @@
 #include <random>
 #include <thread>
 #include <functional>
+#include <typeinfo>
 #include <math.h>
 #include "global.h"
 #ifndef MATRIX_H
 #define MATRIX_H
 
 template <class T>
+class Matrix;
+
+// takes one array; output arr = func( input arr)
+template<typename T>
+void threadBlock(T *blockA, T *blockB, int size, std::function<T(T)> func);
+
+template<typename T>
+void threadLauncher(T *arrA, T *arrOut, int size, std::function<T(T)> func);
+
+// takes one array and a T; output arr = func( input arr, T)
+template<typename T>
+void NumthreadBlock(T *blockA, T *blockB, int size, T num, std::function<T(T, T)> func);
+
+template<typename T>
+void NumthreadLauncher(T *arrA, T *arrOut,int size, T num, std::function<T(T, T)> func);
+
+//takes 2 arrays; output arr = func(input arr A, input arr B)
+template<typename T>
+void OpthreadBlock(T *blockA, T *blockB, T *blockC, int size, std::function<T(T, T)> func);
+
+template<typename T>
+void OpthreadLauncher(T *arrA, T *arrB, T *arrOut, int size, std::function<T(T, T)> func);
+
+template<typename T>
+void  matmulThread(Matrix<T>  *a, Matrix<T> *b, Matrix<T> *c, int threadnum);
+
+template<typename T>
+Matrix<T> applyFunc(Matrix<T> a, std::function<T(T)> func);
+
+template<typename T>
+Matrix<T> applyConst(Matrix<T> a, T num, std::function<T(T, T)> func);
+
+template<typename T>
+Matrix<T> applyOp(Matrix<T> a, Matrix<T> b, std::function<T(T, T)> func);
+
+template<typename T>
+Matrix<T> matmul(Matrix<T> a, Matrix<T> b);
+
+
+template<typename T>
+T Tanh(T x) { return tanh(x); };
+template<typename T>
+T Sig(T x) { return 1 / (1 + exp(x)); };
+template<typename T>
+T SigPr(T x) { return Sig(x) * (1 - Sig(x));  };
+template<typename T>
+T Relu(T x) {
+	if (x > 0) {
+		return x;
+	} else {
+		return 0;
+	}
+}
+template<typename T>
+T ReluPr(T x) {
+	if (x > 0) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+template <class T>
 class Matrix
 {
+private:
+
+	template<typename T>
+	T Mult(T a, T b) { return a * b; };
+	template<typename T>
+	T Divide(T a, T b) { return a / b; };
+	template<typename T>
+	T Sub(T a, T b) { return a - b; };
+	template<typename T>
+	T Add(T a, T b) { return a + b; };
+
+	template<typename T>
+	Matrix<T> elemSub(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Sub); };
+	template<typename T>
+	Matrix<T> elemMult(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Mult); };
+	template<typename T>
+	Matrix<T> elemDivide(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Divide); };
+	template<typename T>
+	Matrix<T> elemAdd(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Add); };
+
+	template<typename T>
+	Matrix<T> constSub(Matrix<T> a, T x) { return applyConst(a, x, Sub); };
+	template<typename T>
+	Matrix<T> constMult(Matrix<T> a, T x) { return applyConst(a, x, Mult); };
+	template<typename T>
+	Matrix<T> constDivide(Matrix<T> a, T x) { return applyConst(a, x, Divide); };
+	template<typename T>
+	Matrix<T> constAdd(Matrix<T> a, T x) { return applyConst(a, x, Add); };
 public:
 	unsigned int width, height;
 	T *arr;
@@ -86,11 +178,38 @@ public:
 		width = height;
 		height = temp;
 	};
-
-	friend Matrix<T> operator + (Matrix<T> const &A, Matrix<T> const &B);
-	friend Matrix<T> operator - (Matrix<T> const &A, Matrix<T> const &B);
-	friend Matrix<T> operator * (Matrix<T> const &A, Matrix<T> const &B);
-	friend Matrix<T> operator / (Matrix<T> const &A, Matrix<T> const &B);
+	template<typename T>
+	Matrix<T> operator + (const T other) { 
+		if (typeid(this) == typeid(T)) {
+			return elemAdd(this, other);
+		} else {
+			return constAdd(this, other)
+		};
+	}
+	template<typename T>
+	Matrix<T> operator - (const T other) { 
+		if (typeid(this) == typeid(T)) {
+			return elemSub(this, other);
+		} else {
+			return constSub(this, other)
+		};
+	}
+	template<typename T>
+	Matrix<T> operator * (const T other) {
+		if (typeid(this) == typeid(T)) {
+			return elemMult(this, other);
+		} else {
+			return constMult(this, other)
+		};
+	}
+	template<typename T>
+	Matrix<T> operator / (const T other) { 
+		if (typeid(this) == typeid(T)) {
+			return elemDivide(this, other);
+		} else {
+			return constDivide(this, other)
+		};
+	}
 };
 
 // takes one array; output arr = func( input arr)
@@ -199,37 +318,6 @@ void  matmulThread(Matrix<T>  *a, Matrix<T> *b, Matrix<T> *c, int threadnum) { /
 		};
 	};
 };
-
-template<typename T>
-T Mult(T a, T b) { return a * b; };
-template<typename T>
-T Divide(T a, T b) { return a / b; };
-template<typename T>
-T Sub(T a, T b) { return a - b; };
-template<typename T>
-T Add(T a, T b) { return a + b; };
-template<typename T>
-T Tanh(T x) { return tanh(x); };
-template<typename T>
-T Sig(T x) { return 1 / (1 + exp(x)); };
-template<typename T>
-T SigPr(T x) { return Sig(x) * (1 - Sig(x));  };
-template<typename T>
-T Relu(T x) {
-	if (x > 0) {
-		return x;
-	} else {
-		return 0;
-	}
-}
-template<typename T>
-T ReluPr(T x) {
-	if (x > 0) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
 template<typename T>
 Matrix<T> applyFunc(Matrix<T> a, std::function<T(T)> func) { // applies function element wise
 	int size;
@@ -260,24 +348,6 @@ Matrix<T> applyOp(Matrix<T> a, Matrix<T> b, std::function<T(T, T)> func) {
 }; // applies operator element wise
 
 template<typename T>
-Matrix<T> elemSub(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Sub); };
-template<typename T>
-Matrix<T> elemMult(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Mult); };
-template<typename T>
-Matrix<T> elemDivide(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Divide); };
-template<typename T>
-Matrix<T> elemAdd(Matrix<T> a, Matrix<T> b) { return applyOp(a, b, Add); };
-
-template<typename T>
-Matrix<T> constSub(Matrix<T> a, T x) { return applyConst(a, x, Sub); };
-template<typename T>
-Matrix<T> constMult(Matrix<T> a, T x) { return applyConst(a, x, Mult); };
-template<typename T>
-Matrix<T> constDivide(Matrix<T> a, T x) { return applyConst(a, x, Divide); };
-template<typename T>
-Matrix<T> constAdd(Matrix<T> a, T x) { return applyConst(a, x, Add); };
-
-template<typename T>
 Matrix<T> matmul(Matrix<T> a, Matrix<T> b) {
 	Matrix<T> c(b.width, a.height);
 	std::thread* threads;
@@ -294,13 +364,4 @@ Matrix<T> matmul(Matrix<T> a, Matrix<T> b) {
 		std::cout << "width a must equal height b";
 	}
 };
-template<typename T>
-Matrix<T> operator + (Matrix<T> const &A, Matrix<T> const &B) { return elemAdd(A, B); }
-template<typename T>
-Matrix<T> operator - (Matrix<T> const &A, Matrix<T> const &B) { return elemSub(A, B); }
-template<typename T>
-Matrix<T> operator * (Matrix<T> const &A, Matrix<T> const &B) { return elemMult(A, B); }
-template<typename T>
-Matrix<T> operator / (Matrix<T> const &A, Matrix<T> const &B) { return elemDivide(A, B);}
-
 #endif

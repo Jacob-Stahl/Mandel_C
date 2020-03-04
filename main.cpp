@@ -1,15 +1,20 @@
 #include <iostream>
 #include "frac_func.h"
 #include "global.h"
+#include "matrix.h"
 using namespace std;
-
 
 int main() {
     int result;
-    cout << "hello world" << endl;
-    result =  brot_iter(.9, .6232);
-    cout << result;
-    cout << "    " << MAX_ITER;
+    Matrix<double> A;
+    Matrix<double> B;
+
+
+    A.arange();
+    B.random(1, 2);
+    Matrix<double> C =  A * B;
+
+    C.pprint();
     return 0;
 }
 
