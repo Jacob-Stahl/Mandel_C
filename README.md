@@ -8,3 +8,5 @@ Controls :
   <li>Mouse wheel up and down to change iteration cap</li>
   <li>right click to take a screenshot</li>
 </ul>
+
+<img src="screenshot1.bmp">
