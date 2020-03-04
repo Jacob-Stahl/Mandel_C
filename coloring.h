@@ -6,21 +6,29 @@
 #ifndef COLORING // generates RGB tuple from iteration value
 #define COLORING
 
-std::tuple <unsigned char, unsigned char, unsigned char> color_scheme(int iter)
+struct Colors
 {
-	int red, blue, green;
+	char red;
+	char green;
+	char blue;
+};
+
+Colors color_scheme(int iter)
+{
+	Colors colors;
+
 	if (iter < MAX_ITER)
 	{
-		red   = (sin(cbrt(iter)   /4 ) + 1) * (127.5);
-		green = (sin(cbrt(iter) - 2) + 1) * (127.5);
-		blue  = (sin(cbrt(iter) * 2 + 2) + 1) * (127.5);
+		colors.red   = (sin(cbrt(iter)   /4 ) + 1) * (127.5);
+		colors.green = (sin(cbrt(iter) - 2) + 1) * (127.5);
+		colors.blue  = (sin(cbrt(iter) * 2 + 2) + 1) * (127.5);
 	}
 	else
 	{
-		red = 0;
-		green = 0;
-		blue = 0;
+		colors.red = 0;
+		colors.green = 0;
+		colors.blue = 0;
 	}
-	return { red, green, blue };
+	return colors;
 };
 #endif

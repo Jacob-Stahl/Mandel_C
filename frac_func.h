@@ -4,20 +4,19 @@
 #include <complex> 
 #include <stdio.h>
 #include "global.h"
-#include "matrix.h"
+#include "coloring.h"
 
 /* fractal functions:
 	brot_iter : z = z^2 + z0
 
 	funky variants terminate when z gets too close to zero */
-template<typename T>
-int funky_brot_iter(T r0, T i0)
+Colors funky_brot_iter(double r0, double i0)
 {
-	T r = r0;
-	T i = i0;
-	T r2 = r * r;
-	T i2 = i * i;
-	T z_mag_2 = r2 + i2;
+	double r = r0;
+	double i = i0;
+	double r2 = r * r;
+	double i2 = i * i;
+	double z_mag_2 = r2 + i2;
 	int iter = 0;
 	float coef = (r + i) / MAX_ITER;
 
@@ -37,17 +36,16 @@ int funky_brot_iter(T r0, T i0)
 		coef = (r + i) / MAX_ITER;
 		iter += 1;
 	}
-	return iter;
+	return color_scheme(iter);
 }
 /* standard mandelbrot set*/
-template<typename T>
-int brot_iter(T r0, T i0)
+Colors brot_iter(double r0, double i0)
 {
-	T r = r0;
-	T i = i0;
-	T r2 = r * r;
-	T i2 = i * i;
-	T z_mag_2 = r2 + i2;
+	double r = r0;
+	double i = i0;
+	double r2 = r * r;
+	double i2 = i * i;
+	double z_mag_2 = r2 + i2;
 	int iter = 0;
 
 	while ((iter < MAX_ITER) && (z_mag_2) < 4)
@@ -65,19 +63,18 @@ int brot_iter(T r0, T i0)
 		z_mag_2 = r2 + i2;
 		iter += 1;
 	};
-	return iter;
+	return color_scheme(iter);
 }
-template<typename T>
-int collatz(T r0, T i0)
+Colors collatz(double r0, double i0)
 {
-	std::complex<T> z(r0, i0);
-	std::complex<T> a;
-	std::complex<T> b;
-	std::complex<T> c1(1,0);
-	std::complex<T> c2(2,0);
-	std::complex<T> c3(3,0);
+	std::complex<double> z(r0, i0);
+	std::complex<double> a;
+	std::complex<double> b;
+	std::complex<double> c1(1,0);
+	std::complex<double> c2(2,0);
+	std::complex<double> c3(3,0);
 	register int iter = 0;
-	register T z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
+	register double z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
 	while ((iter < MAX_ITER) && (z_mag_2 < 64))
 	{
 		a = M_PI / 2 * z;
@@ -85,6 +82,6 @@ int collatz(T r0, T i0)
 		iter += 1;
 		z_mag_2 = pow(real(z), 2) + pow(imag(z), 2);
 	}
-	return iter;
+	return color_scheme(iter);
 };
 #endif

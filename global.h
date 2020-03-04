@@ -1,5 +1,6 @@
 #ifndef GLOBAL
 #define GLOBAL
+#define MAX_ITER_BASE 10
 
 extern int MAX_ITER = 100;
 extern const int ref_zoom = 2; // distance on the complex plane at zoom x1
