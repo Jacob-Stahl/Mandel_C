@@ -28,7 +28,7 @@ void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y)
 
 	cout.precision(3);
 
-	MAX_ITER = MAX_ITER_BASE * log10(zoom + 1);
+	MAX_ITER = 1000;
 
 	zr = xmin;
 	zi = ymin;
@@ -65,7 +65,6 @@ void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y)
 	cout << "threads took : " << cpu_time_used << " seconds" << endl;
 };
 int main() {
-    cout << "TEST1" << endl;
-    render(0, 0, 1, 1100, 1100);
+    render(2, 2, 1, 4000, 2000);
     return 0;
 }

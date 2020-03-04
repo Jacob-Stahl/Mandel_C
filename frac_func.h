@@ -1,13 +1,15 @@
 #ifndef FRAC_FUNC
 #define FRAC_FUNC
 
-#include <complex> 
+#include <complex>
+#include <cmath>
 #include <stdio.h>
 #include "global.h"
 #include "coloring.h"
 
 /* fractal functions:
 	brot_iter : z = z^2 + z0
+	collatz   : z = 1/2 * z * cos^2(pi / 2 * z) + (3*z + 1) / 2 * sin^2(pi / 2 * z)
 
 	funky variants terminate when z gets too close to zero */
 Colors funky_brot_iter(double r0, double i0)
