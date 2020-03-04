@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/Mandel_C.dir/main.cpp.o  -o Mandel_C -lSDL2 -lpthread 

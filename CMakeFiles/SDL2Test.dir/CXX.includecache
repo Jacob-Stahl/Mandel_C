@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/jacobstahl/Desktop/code/Mandel_C/main.cpp
+iostream
+-
+frac_func.h
+/home/jacobstahl/Desktop/code/Mandel_C/frac_func.h
+global.h
+/home/jacobstahl/Desktop/code/Mandel_C/global.h
+SDL2.h
+/home/jacobstahl/Desktop/code/Mandel_C/SDL2.h
+thread_launcher.h
+/home/jacobstahl/Desktop/code/Mandel_C/thread_launcher.h
+time.h
+/home/jacobstahl/Desktop/code/Mandel_C/time.h
+

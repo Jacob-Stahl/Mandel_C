@@ -5,6 +5,9 @@
 #include "time.h"
 using namespace std;
 
+void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y);
+
+
 void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y)
 {
 	const int size = dim_x * dim_y;
