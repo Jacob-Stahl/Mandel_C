@@ -3,13 +3,12 @@
 #include "global.h"
 #include "thread_launcher.h"
 #include "time.h"
+#include "SDL.h"
 using namespace std;
 
-void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y);
+void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y, SDL_Renderer *renderer);
 
-
-void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y)
-{
+void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y, SDL_Renderer *renderer){
 	const int size = dim_x * dim_y;
 
 	double *real = new double[size];
@@ -30,8 +29,6 @@ void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y)
 	double cpu_time_used;
 
 	cout.precision(3);
-
-	MAX_ITER = 1000;
 
 	zr = xmin;
 	zi = ymin;
@@ -66,8 +63,113 @@ void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y)
 	cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
 
 	cout << "threads took : " << cpu_time_used << " seconds" << endl;
+
+	for (int i = 0; i < dim_y; i++)
+	{
+		for (int j = 0; j < dim_x; j++)
+		{
+			SDL_SetRenderDrawColor(renderer,
+				shades[idx].red,
+				shades[idx].green,
+				shades[idx].blue,
+				1);
+			//cout << iter[idx] << " ";
+
+			SDL_RenderDrawPoint(renderer, j, i);
+			idx++;
+		};
+		SDL_RenderPresent(renderer);
+		//cout << endl;
+	};
 };
+
+
+
 int main() {
-    render(2, 2, 1, 4000, 2000);
-    return 0;
+	int x_mpos, y_mpos, x1_mpos, y1_mpos; // mouse positions
+	double fdim_x = dim_x;
+	double fdim_y = dim_y;
+	double ave_dim = (dim_x + dim_y) / 2;
+	double pos_x = 0; // center of screen in complex plane
+	double pos_y = 0;
+	double zoom = 1;
+	int running = 1;
+	cout.precision(64);
+
+	SDL_Init(SDL_INIT_EVERYTHING);
+
+	SDL_Window *window = SDL_CreateWindow("Mandel_C_3.1",
+		SDL_WINDOWPOS_CENTERED,
+		SDL_WINDOWPOS_CENTERED,
+		dim_x, dim_y, 0);
+
+	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	SDL_Event event;
+
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+	SDL_RenderClear(renderer);
+	SDL_RenderPresent(renderer);
+
+	render(pos_x, pos_y, zoom, dim_x, dim_y, renderer);
+
+	while (running == 1)
+	{
+		while (SDL_PollEvent(&event))
+		{
+			if(event.type == SDL_MOUSEWHEEL)
+    		{
+				if(event.wheel.y > 0) // scroll up
+				{
+					MAX_ITER = MAX_ITER * 1.1;
+					cout << "iteration cap : " << MAX_ITER << endl;
+				}
+				else if(event.wheel.y < 0) // scroll down
+				{
+					MAX_ITER = MAX_ITER / 1.1;
+					cout << "iteration cap : " << MAX_ITER << endl;
+				}
+			}
+			if (event.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (event.button.button == SDL_BUTTON_LEFT) // finds location to zoom in on
+				{
+					SDL_GetMouseState(&x_mpos, &y_mpos);
+				}
+			}
+			if (event.type == SDL_MOUSEBUTTONUP)
+			{
+				if (event.button.button == SDL_BUTTON_LEFT) // finds change in y_mpos for zoom value
+				{
+					SDL_GetMouseState(&x1_mpos, &y1_mpos);
+
+					pos_x = pos_x +
+						(
+							(
+								(
+									x_mpos - (dim_x) / 2
+								) / (ave_dim / 2)
+							) / (zoom / ref_zoom)
+						);
+
+					pos_y = pos_y -
+						(
+							(
+								(
+									y_mpos - (dim_y) / 2
+								) / (ave_dim / 2)
+							) / (zoom / ref_zoom)
+						);
+
+					zoom = (zoom + 1) * pow(2, ((y_mpos - y1_mpos) / 75)) - 1;
+					if (zoom < 1) { zoom = 1;}
+					cout << "real: " << pos_x << "  imaginary: " << pos_y << "  zoom: " << zoom << endl;
+					render(pos_x, pos_y, zoom, dim_x, dim_y, renderer);
+				}
+			}
+		};
+	};
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+	SDL_Quit();
+	return 0;
 }
