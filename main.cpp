@@ -135,6 +135,13 @@ int main() {
 				{
 					SDL_GetMouseState(&x_mpos, &y_mpos);
 				}
+				if (event.button.button == SDL_BUTTON_RIGHT) // take screenshot
+				{
+					SDL_Surface *sshot = SDL_CreateRGBSurface(0, dim_x, dim_y, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+					SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_ARGB8888, sshot->pixels, sshot->pitch);
+					SDL_SaveBMP(sshot, "screenshot.bmp");
+					SDL_FreeSurface(sshot);
+				}
 			}
 			if (event.type == SDL_MOUSEBUTTONUP)
 			{
