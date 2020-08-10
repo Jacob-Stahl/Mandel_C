@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <string>
 #include "frac_func.h"
 #include "global.h"
 #include "thread_launcher.h"
@@ -6,9 +8,8 @@
 #include "SDL.h"
 using namespace std;
 
-void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y, SDL_Renderer *renderer);
-
-void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y, SDL_Renderer *renderer){
+void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y, SDL_Renderer *renderer, bool);
+void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y, SDL_Renderer *renderer, bool to_file = 0){
 	const int size = dim_x * dim_y;
 
 	double *real = new double[size];
@@ -20,6 +21,7 @@ void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y, SDL_R
 	double ymin = ((-ref_zoom / zoom) - pos_y);
 	double ymax = ((ref_zoom / zoom) - pos_y);
 	double dx, dy, zr, zi;
+	int num_pixels = dim_x*dim_y;
 
 	Colors *shades = new Colors[size];
 
@@ -27,6 +29,11 @@ void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y, SDL_R
 
 	clock_t start, end;
 	double cpu_time_used;
+
+	string f_name = "X " + std::to_string(pos_x) + " Y " + std::to_string(pos_y) + " zoom " + std::to_string(zoom) + ".bmp";
+
+	string img_string = "";
+	ofstream img;
 
 	cout.precision(3);
 
@@ -62,28 +69,48 @@ void render(double pos_x, double pos_y, double zoom, int dim_x, int dim_y, SDL_R
 	end = clock();
 	cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
 
-	cout << "threads took : " << cpu_time_used << " seconds" << endl;
+	cout << "threads took : " << cpu_time_used / 10 << " seconds" << endl;
 
-	for (int i = 0; i < dim_y; i++)
-	{
-		for (int j = 0; j < dim_x; j++)
+	if (to_file == 0){
+		for (int i = 0; i < dim_y; i++)
 		{
-			SDL_SetRenderDrawColor(renderer,
-				shades[idx].red,
-				shades[idx].green,
-				shades[idx].blue,
-				1);
-			//cout << iter[idx] << " ";
+			for (int j = 0; j < dim_x; j++)
+			{
+				SDL_SetRenderDrawColor(renderer,
+					shades[idx].red,
+					shades[idx].green,
+					shades[idx].blue,
+					1);
 
-			SDL_RenderDrawPoint(renderer, j, i);
-			idx++;
-		};
-		SDL_RenderPresent(renderer);
-		//cout << endl;
-	};
+				SDL_RenderDrawPoint(renderer, j, i);
+				idx++;
+			};
+			SDL_RenderPresent(renderer);
+		}
+	} else {
+		
+		img = ofstream("saves//" + f_name);
+		cout << "saving image..." << endl;
+		img <<"P3" << endl;
+		img << dim_x << " " << dim_y << endl;
+		img << "255" << endl;
+
+		for (int i = 0; i < dim_y; i++)
+		{
+			for (int j = 0; j < dim_x; j++)
+			{
+				int red = shades[idx].red;
+				int green = shades[idx].green;
+				int blue = shades[idx].blue;
+				
+				img_string.append(to_string(red) + " " + to_string(green) + " " + to_string(blue) + "\n");
+				idx++;
+			};
+		}
+		img << img_string;
+		cout << "done!" << endl;
+	}
 };
-
-
 
 int main() {
 	int x_mpos, y_mpos, x1_mpos, y1_mpos; // mouse positions
@@ -120,7 +147,12 @@ int main() {
     		{
 				if(event.wheel.y > 0) // scroll up
 				{
-					MAX_ITER = MAX_ITER * 1.1;
+					if (MAX_ITER > 10)
+					{
+						MAX_ITER = MAX_ITER * 1.1;
+					} else {
+						MAX_ITER += 1;
+					}
 					cout << "iteration cap : " << MAX_ITER << endl;
 				}
 				else if(event.wheel.y < 0) // scroll down
@@ -137,10 +169,13 @@ int main() {
 				}
 				if (event.button.button == SDL_BUTTON_RIGHT) // take screenshot
 				{
-					SDL_Surface *sshot = SDL_CreateRGBSurface(0, dim_x, dim_y, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+					//SDL_Surface *sshot = SDL_CreateRGBSurface(0, dim_x, dim_y, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+					render(pos_x, pos_y, zoom, 4096, 2160, renderer, 1);
+					/*
 					SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_ARGB8888, sshot->pixels, sshot->pitch);
 					SDL_SaveBMP(sshot, "screenshot.bmp");
 					SDL_FreeSurface(sshot);
+					*/
 				}
 			}
 			if (event.type == SDL_MOUSEBUTTONUP)
@@ -149,28 +184,13 @@ int main() {
 				{
 					SDL_GetMouseState(&x1_mpos, &y1_mpos);
 
-					pos_x = pos_x +
-						(
-							(
-								(
-									x_mpos - (dim_x) / 2
-								) / (ave_dim / 2)
-							) / (zoom / ref_zoom)
-						);
-
-					pos_y = pos_y -
-						(
-							(
-								(
-									y_mpos - (dim_y) / 2
-								) / (ave_dim / 2)
-							) / (zoom / ref_zoom)
-						);
+					pos_x = pos_x +(((x_mpos - (dim_x) / 2) / (ave_dim / 2)) / (zoom / ref_zoom));
+					pos_y = pos_y -(((y_mpos - (dim_y) / 2) / (ave_dim / 2)) / (zoom / ref_zoom));
 
 					zoom = (zoom + 1) * pow(2, ((y_mpos - y1_mpos) / 75)) - 1;
 					if (zoom < 1) { zoom = 1;}
 					cout << "real: " << pos_x << "  imaginary: " << pos_y << "  zoom: " << zoom << endl;
-					render(pos_x, pos_y, zoom, dim_x, dim_y, renderer);
+					render(pos_x, pos_y, zoom, dim_x, dim_y, renderer, 0);
 				}
 			}
 		};

@@ -9,6 +9,10 @@
 /home/jacobstahl/Desktop/code/Mandel_C/main.cpp
 iostream
 -
+fstream
+-
+string
+-
 frac_func.h
 /home/jacobstahl/Desktop/code/Mandel_C/frac_func.h
 global.h

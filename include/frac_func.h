@@ -47,14 +47,12 @@ Colors brot_iter(double r0, double i0)
 	double i = i0;
 	double r2 = r * r;
 	double i2 = i * i;
-	double z_mag_2 = r2 + i2;
 	int iter = 0;
 
-	while ((iter < MAX_ITER) && (z_mag_2) < 4)
+	while ((iter < MAX_ITER) && (r2 + i2) < 4)
 	{
-		i = r * i;
-		r = r2 - i2;  
-		i += i;
+		i = r * i * 2;
+		r = r2 - i2;
 
 		r += r0;
 		i += i0;
@@ -62,7 +60,6 @@ Colors brot_iter(double r0, double i0)
 		r2 = r * r;
 		i2 = i * i;
 
-		z_mag_2 = r2 + i2;
 		iter += 1;
 	};
 	return color_scheme(iter);
